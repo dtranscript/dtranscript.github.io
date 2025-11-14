@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Transcript Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="upload-section">
+            <h1>Discord Transcript Viewer</h1>
+            <p>Upload your transcript HTML file to view it in Discord-style</p>
+            <input type="file" id="fileInput" accept=".html">
+            <button onclick="loadTranscript()">View Transcript</button>
+        </div>
+        <div id="transcriptViewer" style="display: none;"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
