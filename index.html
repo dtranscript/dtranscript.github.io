@@ -8,14 +8,92 @@
 </head>
 <body>
     <div class="container">
+        <header class="hero">
+            <h1>💬 Discord Transcript Viewer</h1>
+            <p>View your Discord chat transcripts in beautiful, native Discord style</p>
+        </header>
+
         <div class="upload-section">
-            <h1>Discord Transcript Viewer</h1>
-            <p>Upload your transcript HTML file to view it in Discord-style</p>
-            <input type="file" id="fileInput" accept=".html">
-            <button onclick="loadTranscript()">View Transcript</button>
+            <div class="upload-options">
+                <div class="option-card" onclick="showUpload('file')">
+                    <div class="option-icon">📁</div>
+                    <h3>Upload File</h3>
+                    <p>Upload HTML transcript file from your computer</p>
+                </div>
+                
+                <div class="option-card" onclick="showUpload('url')">
+                    <div class="option-icon">🔗</div>
+                    <h3>From URL</h3>
+                    <p>Load transcript from a direct URL link</p>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div id="fileUpload" class="upload-method" style="display: none;">
+                <div class="upload-area" id="fileDropArea">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drop your transcript file here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept=".html" style="display: none;">
+                    <button onclick="document.getElementById('fileInput').click()">Choose File</button>
+                </div>
+            </div>
+
+            <!-- URL Upload -->
+            <div id="urlUpload" class="upload-method" style="display: none;">
+                <div class="url-input-group">
+                    <input type="url" id="urlInput" placeholder="https://example.com/transcript.html">
+                    <button onclick="loadFromURL()">Load Transcript</button>
+                </div>
+                <div class="url-examples">
+                    <p><strong>Supported formats:</strong></p>
+                    <ul>
+                        <li>Direct HTML file URLs</li>
+                        <li>GitHub Raw URLs</li>
+                        <li>Any publicly accessible HTML file</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="back-button" id="backButton" style="display: none;">
+                <button onclick="showMainMenu()">← Back to Menu</button>
+            </div>
         </div>
-        <div id="transcriptViewer" style="display: none;"></div>
+
+        <div class="features">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature">
+                    <div class="feature-icon">🎨</div>
+                    <h4>Discord Native Style</h4>
+                    <p>Authentic Discord appearance with proper colors and layout</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <h4>Mobile Friendly</h4>
+                    <p>Responsive design that works on all devices</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h4>Fast Loading</h4>
+                    <p>Quick transcript rendering and smooth navigation</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h4>Privacy First</h4>
+                    <p>All processing happens in your browser</p>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading transcript...</p>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
