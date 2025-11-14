@@ -1,147 +1,204 @@
-function loadTranscript() {
+// Global state
+let currentTranscriptHTML = '';
+
+// Show upload methods
+function showUpload(method) {
+    document.querySelector('.upload-options').style.display = 'none';
+    document.getElementById('backButton').style.display = 'block';
+    
+    if (method === 'file') {
+        document.getElementById('fileUpload').style.display = 'block';
+        setupFileUpload();
+    } else {
+        document.getElementById('urlUpload').style.display = 'block';
+    }
+}
+
+// Show main menu
+function showMainMenu() {
+    document.querySelector('.upload-options').style.display = 'grid';
+    document.getElementById('backButton').style.display = 'none';
+    document.getElementById('fileUpload').style.display = 'none';
+    document.getElementById('urlUpload').style.display = 'none';
+}
+
+// Setup file upload with drag & drop
+function setupFileUpload() {
+    const dropArea = document.getElementById('fileDropArea');
     const fileInput = document.getElementById('fileInput');
-    const file = fileInput.files[0];
     
-    if (!file) {
-        showNotification('Please select a file first!', 'error');
-        return;
-    }
+    // Click to select file
+    dropArea.addEventListener('click', () => fileInput.click());
     
-    if (!file.name.endsWith('.html')) {
-        showNotification('Please select an HTML file!', 'error');
-        return;
+    // Drag & drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    fileInput.addEventListener('change', handleFileSelect, false);
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight() {
+    document.getElementById('fileDropArea').classList.add('drag-over');
+}
+
+function unhighlight() {
+    document.getElementById('fileDropArea').classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+}
+
+function handleFileSelect(e) {
+    const files = e.target.files;
+    handleFiles(files);
+}
+
+function handleFiles(files) {
+    if (files.length > 0) {
+        const file = files[0];
+        if (file.name.endsWith('.html')) {
+            loadFromFile(file);
+        } else {
+            showNotification('Please select an HTML file!', 'error');
+        }
     }
+}
+
+// Load from file
+function loadFromFile(file) {
+    showLoading();
     
     const reader = new FileReader();
     reader.onload = function(e) {
-        const transcriptViewer = document.getElementById('transcriptViewer');
-        
-        // Extract the content from the uploaded HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(e.target.result, 'text/html');
-        
-        // Create transcript container
-        const transcriptHTML = createTranscriptContainer(doc);
-        transcriptViewer.innerHTML = transcriptHTML;
-        transcriptViewer.style.display = 'block';
-        
-        // Add event listeners for images
-        addImageEventListeners();
-        
-        // Scroll to transcript
-        window.scrollTo({
-            top: transcriptViewer.offsetTop,
-            behavior: 'smooth'
-        });
-        
-        showNotification('Transcript loaded successfully!');
+        hideLoading();
+        currentTranscriptHTML = e.target.result;
+        openTranscriptViewer();
     };
     
     reader.onerror = function() {
+        hideLoading();
         showNotification('Error reading file!', 'error');
     };
     
     reader.readAsText(file);
 }
 
-function createTranscriptContainer(doc) {
-    const header = doc.querySelector('.header') || doc.querySelector('h1');
-    const messages = doc.querySelector('.messages') || doc.querySelector('.messages-container');
-    const info = doc.querySelector('.info') || doc.querySelector('.info-grid');
-    const footer = doc.querySelector('.footer');
+// Load from URL
+function loadFromURL() {
+    const urlInput = document.getElementById('urlInput');
+    const url = urlInput.value.trim();
     
-    return `
-        <div class="transcript-container">
-            <div class="transcript-header">
-                <h1>${header ? header.textContent : 'Discord Transcript'}</h1>
-                <div class="transcript-channel-info">Uploaded Transcript</div>
-            </div>
-            
-            ${info ? `<div class="transcript-info-grid">${info.innerHTML}</div>` : ''}
-            
-            <div class="transcript-messages-container">
-                ${messages ? messages.innerHTML : 'No messages found'}
-            </div>
-            
-            ${footer ? `<div class="transcript-footer">${footer.innerHTML}</div>` : 
-                `<div class="transcript-footer">
-                    Viewed via Discord Transcript Viewer • ${new Date().toLocaleString()}
-                </div>`}
-        </div>
-    `;
-}
-
-function addImageEventListeners() {
-    const images = document.querySelectorAll('.transcript-attachment-image, .attachment-image');
-    images.forEach(img => {
-        img.addEventListener('click', function() {
-            window.open(this.src, '_blank');
+    if (!url) {
+        showNotification('Please enter a URL!', 'error');
+        return;
+    }
+    
+    // Validate URL
+    try {
+        new URL(url);
+    } catch (e) {
+        showNotification('Please enter a valid URL!', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            hideLoading();
+            currentTranscriptHTML = html;
+            openTranscriptViewer();
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error loading transcript:', error);
+            showNotification(`Failed to load transcript: ${error.message}`, 'error');
         });
-    });
 }
 
+// Open transcript viewer
+function openTranscriptViewer() {
+    // Encode HTML for URL parameter
+    const encodedHTML = encodeURIComponent(currentTranscriptHTML);
+    
+    // Open in new tab with transcript data
+    const viewerUrl = `viewer.html?data=${encodedHTML}`;
+    window.open(viewerUrl, '_blank');
+}
+
+// Loading functions
+function showLoading() {
+    document.getElementById('loading').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+}
+
+// Notification system
 function showNotification(message, type = 'success') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notif => notif.remove());
+    
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? 'var(--red)' : 'var(--green)'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    `;
     
     document.body.appendChild(notification);
     
     setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// Drag and drop functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('fileInput');
-    const uploadSection = document.querySelector('.upload-section');
-    
-    // Prevent default drag behaviors
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadSection.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    // Highlight drop area when item is dragged over it
-    ['dragenter', 'dragover'].forEach(eventName => {
-        uploadSection.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        uploadSection.addEventListener(eventName, unhighlight, false);
-    });
-    
-    // Handle dropped files
-    uploadSection.addEventListener('drop', handleDrop, false);
-    
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
+// Add CSS for notifications
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
-    
-    function highlight() {
-        uploadSection.classList.add('file-drop-area');
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
     }
-    
-    function unhighlight() {
-        uploadSection.classList.remove('file-drop-area');
-    }
-    
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        if (files.length > 0) {
-            fileInput.files = files;
-            loadTranscript();
-        }
-    }
-});
+`;
+document.head.appendChild(style);
