@@ -8,14 +8,39 @@
 </head>
 <body>
     <div class="container">
-        <div class="upload-section">
+        <div class="upload-section" id="uploadSection">
             <h1>Discord Transcript Viewer</h1>
-            <p>Upload your transcript HTML file to view it in Discord-style</p>
-            <input type="file" id="fileInput" accept=".html">
-            <button onclick="loadTranscript()">View Transcript</button>
+            <p>Upload your transcript HTML file or view from URL</p>
+            
+            <div class="input-group">
+                <input type="file" id="fileInput" accept=".html">
+                <button onclick="loadFromFile()">View from File</button>
+            </div>
+            
+            <div class="or-divider">
+                <span>OR</span>
+            </div>
+            
+            <div class="input-group">
+                <input type="url" id="urlInput" placeholder="https://raw.githubusercontent.com/.../transcript.html">
+                <button onclick="loadFromURL()">View from URL</button>
+            </div>
+            
+            <div class="examples">
+                <p><strong>Example URLs:</strong></p>
+                <code>https://dtranscript.github.io/?url=https://raw.githubusercontent.com/username/repo/main/transcript.html</code><br>
+                <code>https://dtranscript.github.io/?file=transcript-1021.html</code>
+            </div>
         </div>
+        
+        <div id="loadingSection" class="loading-section" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Loading transcript...</p>
+        </div>
+        
         <div id="transcriptViewer" style="display: none;"></div>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
