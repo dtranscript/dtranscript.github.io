@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Transcript Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Transcript-specific styles */
+        .transcript-container {
+            background: var(--background-primary);
+            min-height: 100vh;
+        }
+
+        .transcript-header {
+            background: var(--background-secondary);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header-actions button {
+            background: var(--background-tertiary);
+            color: var(--text-normal);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .header-actions button:hover {
+            background: var(--background-accent);
+        }
+
+        .transcript-header h1 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .transcript-channel-info {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .transcript-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Import Discord-like message styles from previous examples */
+        /* ... (salin semua styles message dari template sebelumnya) ... */
+    </style>
+</head>
+<body>
+    <div class="transcript-container">
+        <div class="transcript-header">
+            <div class="header-actions">
+                <button onclick="window.close()">← Close</button>
+                <button onclick="shareTranscript()">🔗 Share</button>
+            </div>
+            <h1 id="transcriptTitle">Discord Transcript</h1>
+            <div class="transcript-channel-info" id="transcriptInfo">Loading...</div>
+        </div>
+        
+        <div class="transcript-content" id="transcriptContent">
+            <!-- Transcript will be rendered here -->
+        </div>
+    </div>
+
+    <script>
+        // Load transcript from URL parameters
+        function loadTranscriptFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encodedData = urlParams.get('data');
+            
+            if (encodedData) {
+                const htmlContent = decodeURIComponent(encodedData);
+                renderTranscript(htmlContent);
+            } else {
+                document.getElementById('transcriptContent').innerHTML = `
+                    <div class="error-message">
+                        <h2>No transcript data found</h2>
+                        <p>Please go back and upload a transcript file.</p>
+                        <button onclick="window.close()">Go Back</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTranscript(htmlContent) {
+            // Extract title and info from the HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            
+            // Set title
+            const title = doc.querySelector('h1')?.textContent || 'Discord Transcript';
+            document.getElementById('transcriptTitle').textContent = title;
+            
+            // Set channel info
+            const channelInfo = doc.querySelector('.header p')?.textContent || 'Transcript Viewer';
+            document.getElementById('transcriptInfo').textContent = channelInfo;
+            
+            // Render messages
+            const messagesContainer = doc.querySelector('.messages') || doc.querySelector('.messages-container');
+            if (messagesContainer) {
+                document.getElementById('transcriptContent').innerHTML = messagesContainer.innerHTML;
+            } else {
+                document.getElementById('transcriptContent').innerHTML = htmlContent;
+            }
+            
+            // Add Discord-like styling to messages
+            applyDiscordStyles();
+        }
+
+        function applyDiscordStyles() {
+            // Apply Discord-specific styles to messages
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(message => {
+                message.style.cssText = `
+                    display: flex;
+                    padding: 2px 20px;
+                    margin: 1px 0;
+                    position: relative;
+                `;
+                
+                message.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(255,255,255,0.02)';
+                });
+                
+                message.addEventListener('mouseleave', function() {
+                    this.style.background = 'transparent';
+                });
+            });
+        }
+
+        function shareTranscript() {
+            const currentUrl = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Discord Transcript',
+                    url: currentUrl
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(currentUrl).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            } else {
+                prompt('Copy this link:', currentUrl);
+            }
+        }
+
+        // Load transcript when page opens
+        document.addEventListener('DOMContentLoaded', loadTranscriptFromURL);
+    </script>
+</body>
+</html>
